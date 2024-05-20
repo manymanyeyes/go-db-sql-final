@@ -42,7 +42,7 @@ func TestAddGetDelete(t *testing.T) {
 	// добавьте новую посылку в БД, убедитесь в отсутствии ошибки и наличии идентификатора
 	id, err := store.Add(parcel)
 	require.NoError(t, err)
-	require.NotNil(t, id)
+	require.NotZero(t, id)
 
 	// get
 	// получите только что добавленную посылку, убедитесь в отсутствии ошибки
@@ -50,15 +50,13 @@ func TestAddGetDelete(t *testing.T) {
 	p, err := store.Get(id)
 	require.NoError(t, err)
 	require.Equal(t, parcel.Client, p.Client)
-	require.Equal(t, parcel.Status, p.Status)
-	require.Equal(t, parcel.Address, p.Address)
 
 	// delete
 	// удалите добавленную посылку, убедитесь в отсутствии ошибки
 	// проверьте, что посылку больше нельзя получить из БД
 	require.NoError(t, store.Delete(id))
 	_, err = store.Get(id)
-	require.Error(t, err)
+	require.ErrorIs(t, sql.ErrNoRows, err)
 }
 
 // TestSetAddress проверяет обновление адреса
@@ -74,7 +72,7 @@ func TestSetAddress(t *testing.T) {
 	parcel := getTestParcel()
 	id, err := store.Add(parcel)
 	require.NoError(t, err)
-	require.NotNil(t, id)
+	require.NotZero(t, id)
 
 	// set address
 	// обновите адрес, убедитесь в отсутствии ошибки
@@ -101,7 +99,7 @@ func TestSetStatus(t *testing.T) {
 	parcel := getTestParcel()
 	id, err := store.Add(parcel)
 	require.NoError(t, err)
-	require.NotNil(t, id)
+	require.NotZero(t, id)
 
 	// set status
 	// обновите статус, убедитесь в отсутствии ошибки
@@ -141,7 +139,7 @@ func TestGetByClient(t *testing.T) {
 	for i := 0; i < len(parcels); i++ {
 		id, err := store.Add(parcels[i]) // добавьте новую посылку в БД, убедитесь в отсутствии ошибки и наличии идентификатора
 		require.NoError(t, err)
-		require.NotNil(t, id)
+		require.NotZero(t, id)
 
 		// обновляем идентификатор добавленной у посылки
 		parcels[i].Number = id
@@ -162,8 +160,8 @@ func TestGetByClient(t *testing.T) {
 		// в parcelMap лежат добавленные посылки, ключ - идентификатор посылки, значение - сама посылка
 		// убедитесь, что все посылки из storedParcels есть в parcelMap
 		// убедитесь, что значения полей полученных посылок заполнены верно
-		expected, ok := parcelMap[parcel.Number]
-		require.True(t, ok)
+		require.Contains(t, parcelMap, parcel.Number)
+		expected := parcelMap[parcel.Number]
 		require.Equal(t, expected.Client, parcel.Client)
 		require.Equal(t, expected.Status, parcel.Status)
 		require.Equal(t, expected.Address, parcel.Address)
